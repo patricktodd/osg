@@ -10,6 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * OpenSceneGraph Public License for more details.
 */
+#include <osg/State>
 #include <osg/GL>
 #include <osg/ShadeModel>
 #include <osg/Notify>
@@ -26,8 +27,10 @@ ShadeModel::~ShadeModel()
 {
 }
 
-void ShadeModel::apply(State&) const
+void ShadeModel::apply(State& state) const
 {
+    // No fixed-function state on a core profile context.
+    if (state.getIsCoreProfile()) return;
 #ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
     glShadeModel((GLenum)_mode);
 #else

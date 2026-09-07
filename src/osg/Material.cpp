@@ -352,8 +352,10 @@ void Material::setAlpha(Face face,float alpha)
 }
 
 #ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
-void Material::apply(State&) const
+void Material::apply(State& state) const
 {
+    // No fixed-function state on a core profile context.
+    if (state.getIsCoreProfile()) return;
 
 #ifdef OSG_GL1_AVAILABLE
     if (_colorMode==OFF)

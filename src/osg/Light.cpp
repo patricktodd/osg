@@ -11,6 +11,7 @@
  * OpenSceneGraph Public License for more details.
 */
 #include <osg/Light>
+#include <osg/State>
 #include <osg/StateSet>
 #include <osg/Notify>
 
@@ -85,8 +86,10 @@ void Light::captureLightState()
 #endif
 }
 
-void Light::apply(State&) const
+void Light::apply(State& state) const
 {
+    // No fixed-function state on a core profile context.
+    if (state.getIsCoreProfile()) return;
 #ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
     glLightfv( (GLenum)((int)GL_LIGHT0 + _lightnum), GL_AMBIENT,               _ambient.ptr() );
     glLightfv( (GLenum)((int)GL_LIGHT0 + _lightnum), GL_DIFFUSE,               _diffuse.ptr() );

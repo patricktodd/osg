@@ -2161,6 +2161,14 @@ void Texture::applyTexParameters(GLenum target, State& state) const
         if (ws == CLAMP) ws = CLAMP_TO_EDGE;
         if (wt == CLAMP) wt = CLAMP_TO_EDGE;
         if (wr == CLAMP) wr = CLAMP_TO_EDGE;
+    #else
+        // GL_CLAMP does not exist on a core profile context.
+        if (state.getIsCoreProfile())
+        {
+            if (ws == CLAMP) ws = CLAMP_TO_EDGE;
+            if (wt == CLAMP) wt = CLAMP_TO_EDGE;
+            if (wr == CLAMP) wr = CLAMP_TO_EDGE;
+        }
     #endif
 
     const Image * image = getImage(0);
@@ -2231,7 +2239,9 @@ void Texture::applyTexParameters(GLenum target, State& state) const
             glTexParameteri(target, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
             glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC_ARB, _shadow_compare_func);
             #if defined(OSG_GL1_AVAILABLE) || defined(OSG_GL2_AVAILABLE)
-                glTexParameteri(target, GL_DEPTH_TEXTURE_MODE_ARB, _shadow_texture_mode);
+                // GL_DEPTH_TEXTURE_MODE does not exist on a core profile context.
+                if (!state.getIsCoreProfile())
+                    glTexParameteri(target, GL_DEPTH_TEXTURE_MODE_ARB, _shadow_texture_mode);
             #endif
 
             // if ambient value is 0 - it is default behaviour of GL_ARB_shadow

@@ -422,25 +422,29 @@ void osgParticle::ParticleSystem::drawImplementation(osg::RenderInfo& renderInfo
                         texcoords.push_back(t2);
 
 #if defined(OSG_GL1_AVAILABLE) || defined(OSG_GL2_AVAILABLE) || defined(OSG_GLES1_AVAILABLE)
-                        const unsigned int count = 4;
-                        const GLenum mode = GL_QUADS;
-
-                        // Last point (and texcoord) of quad
-                        vertices.push_back(c3);
-                        texcoords.push_back(t3);
+                        // No GL_QUADS on a core profile context either.
+                        const bool useQuads = !state.getIsCoreProfile();
 #else
-                        // No GL_QUADS mode on OpenGL 3 and upper / GLES2 and upper
-                        const unsigned int count = 6;
-                        const GLenum mode = GL_TRIANGLES;
-
-                        // Second triangle
-                        vertices.push_back(c2);
-                        vertices.push_back(c3);
-                        vertices.push_back(c0);
-                        texcoords.push_back(t2);
-                        texcoords.push_back(t3);
-                        texcoords.push_back(t0);
+                        const bool useQuads = false;
 #endif
+                        const unsigned int count = useQuads ? 4 : 6;
+                        const GLenum mode = useQuads ? GL_QUADS : GL_TRIANGLES;
+                        if (useQuads)
+                        {
+                            // Last point (and texcoord) of quad
+                            vertices.push_back(c3);
+                            texcoords.push_back(t3);
+                        }
+                        else
+                        {
+                            // Second triangle
+                            vertices.push_back(c2);
+                            vertices.push_back(c3);
+                            vertices.push_back(c0);
+                            texcoords.push_back(t2);
+                            texcoords.push_back(t3);
+                            texcoords.push_back(t0);
+                        }
                         for (unsigned int j = 0; j < count; ++j)
                             colors.push_back(color);
 
@@ -495,7 +499,7 @@ void osgParticle::ParticleSystem::drawImplementation(osg::RenderInfo& renderInfo
 
     // set up depth mask for first rendering pass
 #if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GLES3_AVAILABLE) && !defined(OSG_GL3_AVAILABLE)
-    glPushAttrib(GL_DEPTH_BUFFER_BIT);
+    if (!state.getIsCoreProfile()) glPushAttrib(GL_DEPTH_BUFFER_BIT);
 #endif
 
     glDepthMask(GL_FALSE);
@@ -505,7 +509,7 @@ void osgParticle::ParticleSystem::drawImplementation(osg::RenderInfo& renderInfo
 
 #if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GLES3_AVAILABLE) && !defined(OSG_GL3_AVAILABLE)
     // restore depth mask settings
-    glPopAttrib();
+    if (!state.getIsCoreProfile()) glPopAttrib();
 #endif
 
     // render, second pass
@@ -513,7 +517,7 @@ void osgParticle::ParticleSystem::drawImplementation(osg::RenderInfo& renderInfo
     {
         // set up color mask for second rendering pass
 #if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GLES3_AVAILABLE) && !defined(OSG_GL3_AVAILABLE)
-        glPushAttrib(GL_COLOR_BUFFER_BIT);
+        if (!state.getIsCoreProfile()) glPushAttrib(GL_COLOR_BUFFER_BIT);
 #endif
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
@@ -521,7 +525,7 @@ void osgParticle::ParticleSystem::drawImplementation(osg::RenderInfo& renderInfo
 
 #if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GLES3_AVAILABLE) && !defined(OSG_GL3_AVAILABLE)
         // restore color mask settings
-        glPopAttrib();
+        if (!state.getIsCoreProfile()) glPopAttrib();
 #endif
     }
 }

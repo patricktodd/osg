@@ -10,6 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * OpenSceneGraph Public License for more details.
 */
+#include <osg/State>
 #include <osg/GL>
 #include <osg/PolygonStipple>
 #include <osg/Notify>
@@ -79,8 +80,10 @@ void PolygonStipple::setMask(const GLubyte* givenMask)
     std::copy(givenMask,givenMask+128,_mask);
 }
 
-void PolygonStipple::apply(State&) const
+void PolygonStipple::apply(State& state) const
 {
+    // No fixed-function state on a core profile context.
+    if (state.getIsCoreProfile()) return;
 #ifdef OSG_GL1_AVAILABLE
     glPolygonStipple(_mask);
 #else

@@ -29,6 +29,8 @@ ColorMatrix::~ColorMatrix()
 
 void ColorMatrix::apply(State& state) const
 {
+    // No fixed-function state on a core profile context.
+    if (state.getIsCoreProfile()) return;
 #if defined(OSG_GL_FIXED_FUNCTION_AVAILABLE) && !defined(OSG_GLES1_AVAILABLE)
     unsigned int contextID = state.getContextID();
 

@@ -10,6 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * OpenSceneGraph Public License for more details.
 */
+#include <osg/State>
 #include <osg/GL>
 #include <osg/LineStipple>
 #include <osg/Notify>
@@ -38,8 +39,10 @@ void LineStipple::setPattern(GLushort pattern)
     _pattern = pattern;
 }
 
-void LineStipple::apply(State&) const
+void LineStipple::apply(State& state) const
 {
+    // No fixed-function state on a core profile context.
+    if (state.getIsCoreProfile()) return;
 #ifdef OSG_GL1_AVAILABLE
     glLineStipple(_factor, _pattern);
 #else

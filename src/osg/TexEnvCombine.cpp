@@ -45,6 +45,8 @@ TexEnvCombine::~TexEnvCombine()
 
 void TexEnvCombine::apply(State& state) const
 {
+    // No fixed-function state on a core profile context.
+    if (state.getIsCoreProfile()) return;
 #ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
     unsigned int contextID = state.getContextID();
 

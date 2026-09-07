@@ -12,6 +12,7 @@
 */
 
 #include <osg/AlphaFunc>
+#include <osg/State>
 #include <osg/Notify>
 
 using namespace osg;
@@ -27,8 +28,10 @@ AlphaFunc::~AlphaFunc()
 {
 }
 
-void AlphaFunc::apply(State&) const
+void AlphaFunc::apply(State& state) const
 {
+    // No fixed-function state on a core profile context.
+    if (state.getIsCoreProfile()) return;
 #ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
     glAlphaFunc((GLenum)_comparisonFunc,_referenceValue);
 #else

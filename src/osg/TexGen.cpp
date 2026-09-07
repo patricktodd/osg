@@ -11,6 +11,7 @@
  * OpenSceneGraph Public License for more details.
 */
 #include <osg/TexGen>
+#include <osg/State>
 #include <osg/Notify>
 #include <osg/io_utils>
 
@@ -75,8 +76,10 @@ void TexGen::setPlanesFromMatrix(const Matrixd& matrix)
     _plane_q.set(matrix(0,3),matrix(1,3),matrix(2,3),matrix(3,3));
 }
 
-void TexGen::apply(State&) const
+void TexGen::apply(State& state) const
 {
+    // No fixed-function state on a core profile context.
+    if (state.getIsCoreProfile()) return;
 #if defined(OSG_GL_FIXED_FUNCTION_AVAILABLE) && !defined(OSG_GLES1_AVAILABLE)
     if (_mode == OBJECT_LINEAR || _mode == EYE_LINEAR)
     {

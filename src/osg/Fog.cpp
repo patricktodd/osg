@@ -11,8 +11,8 @@
  * OpenSceneGraph Public License for more details.
 */
 #include <osg/GLExtensions>
-#include <osg/State>
 #include <osg/Fog>
+#include <osg/State>
 #include <osg/Notify>
 
 using namespace osg;
@@ -39,6 +39,8 @@ Fog::~Fog()
 
 void Fog::apply(State& state) const
 {
+    // No fixed-function state on a core profile context.
+    if (state.getIsCoreProfile()) return;
 #ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
 
 #ifdef OSG_GLES1_AVAILABLE

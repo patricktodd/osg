@@ -52,6 +52,8 @@ LightModel::~LightModel()
 
 void LightModel::apply(State& state) const
 {
+    // No fixed-function state on a core profile context.
+    if (state.getIsCoreProfile()) return;
 
     #ifdef OSG_GLES1_AVAILABLE
     #define glLightModeli glLightModelx

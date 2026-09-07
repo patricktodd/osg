@@ -30,6 +30,8 @@ TexEnv::~TexEnv()
 
 void TexEnv::apply(State& state) const
 {
+    // No fixed-function state on a core profile context.
+    if (state.getIsCoreProfile()) return;
 #ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
     if (_mode==ADD)
     {
