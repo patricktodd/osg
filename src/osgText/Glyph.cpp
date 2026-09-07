@@ -418,6 +418,14 @@ osg::Image* GlyphTexture::createImage()
 
         GLenum imageFormat = (_shaderTechnique<=GREYSCALE) ? OSGTEXT_GLYPH_ALPHA_FORMAT : OSGTEXT_GLYPH_SDF_FORMAT;
         GLenum internalFormat = (_shaderTechnique<=GREYSCALE) ? OSGTEXT_GLYPH_ALPHA_INTERNALFORMAT : OSGTEXT_GLYPH_SDF_INTERNALFORMAT;
+        // The SHADER_GL3 hint selects the >=130 text shader, which samples ALPHA from .r and SDF from .g
+        // (see osgText_Text_frag.cpp); store the glyph pages in the matching red/red-green layout, which is
+        // also what a core profile context (no alpha/luminance formats) needs.
+        if (osg::DisplaySettings::instance()->getShaderHint()==osg::DisplaySettings::SHADER_GL3)
+        {
+            imageFormat = (_shaderTechnique<=GREYSCALE) ? GL_RED : GL_RG;
+            internalFormat = (_shaderTechnique<=GREYSCALE) ? GL_R8 : GL_RG8;
+        }
 
         _image->allocateImage(getTextureWidth(), getTextureHeight(), 1, imageFormat, GL_UNSIGNED_BYTE);
         _image->setInternalTextureFormat(internalFormat);

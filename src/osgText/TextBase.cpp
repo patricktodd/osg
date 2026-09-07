@@ -154,7 +154,11 @@ void TextBase::compileGLObjects(osg::RenderInfo& renderInfo) const
 
             state.bindVertexArrayObject(vas);
 
-            drawImplementation(renderInfo);
+            // The warm-up draw runs outside any StateSet (no program bound), which a core profile context
+            // rejects. The vertex array object and buffer objects are still created here; the buffers are
+            // filled on the first real draw instead.
+            if (!state.getIsCoreProfile())
+                drawImplementation(renderInfo);
 
             state.unbindVertexArrayObject();
         }
