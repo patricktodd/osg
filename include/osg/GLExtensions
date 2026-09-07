@@ -393,6 +393,8 @@ class OSG_EXPORT GLExtensions : public osg::Referenced
 
         // Buffer Object extensions
         bool isBufferObjectSupported;
+        /// True on a core profile context (GL_CONTEXT_PROFILE_MASK), where no fixed-function state exists.
+        bool isCoreProfile;
         bool isVBOSupported;
         bool isPBOSupported;
         bool isTBOSupported;

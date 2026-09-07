@@ -68,6 +68,7 @@ State::State():
         _useModelViewAndProjectionUniforms = false;
         _useVertexAttributeAliasing = false;
     #endif
+    _isCoreProfile = false;
 
     _modelViewMatrixUniform = new Uniform(Uniform::FLOAT_MAT4,"osg_ModelViewMatrix");
     _projectionMatrixUniform = new Uniform(Uniform::FLOAT_MAT4,"osg_ProjectionMatrix");
@@ -193,6 +194,7 @@ void State::initializeExtensionProcs()
     }
 
     _glExtensions = GLExtensions::Get(_contextID, true);
+    _isCoreProfile = _glExtensions->isCoreProfile;
 
     _isSecondaryColorSupported = osg::isGLExtensionSupported(_contextID,"GL_EXT_secondary_color");
     _isFogCoordSupported = osg::isGLExtensionSupported(_contextID,"GL_EXT_fog_coord");
@@ -245,7 +247,8 @@ void State::initializeExtensionProcs()
     {
         glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,&_glMaxTextureUnits);
         #ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
-            glGetIntegerv(GL_MAX_TEXTURE_COORDS, &_glMaxTextureCoords);
+            if (_isCoreProfile) _glMaxTextureCoords = _glMaxTextureUnits;
+            else glGetIntegerv(GL_MAX_TEXTURE_COORDS, &_glMaxTextureCoords);
         #else
             _glMaxTextureCoords = _glMaxTextureUnits;
         #endif
@@ -1420,9 +1423,13 @@ void State::applyProjectionMatrix(const osg::RefMatrix* matrix)
             updateModelViewAndProjectionMatrixUniforms();
         }
 #ifdef OSG_GL_MATRICES_AVAILABLE
-        glMatrixMode( GL_PROJECTION );
-            glLoadMatrix(_projection->ptr());
-        glMatrixMode( GL_MODELVIEW );
+        // A core profile context has no matrix stack.
+        if (!_isCoreProfile)
+        {
+            glMatrixMode( GL_PROJECTION );
+                glLoadMatrix(_projection->ptr());
+            glMatrixMode( GL_MODELVIEW );
+        }
 #endif
     }
 }
@@ -1436,7 +1443,8 @@ void State::loadModelViewMatrix()
     }
 
 #ifdef OSG_GL_MATRICES_AVAILABLE
-    glLoadMatrix(_modelView->ptr());
+    if (!_isCoreProfile)
+        glLoadMatrix(_modelView->ptr());
 #endif
 }
 

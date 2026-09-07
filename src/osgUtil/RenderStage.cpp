@@ -1384,8 +1384,12 @@ void RenderStage::drawImplementation(osg::RenderInfo& renderInfo,RenderLeaf*& pr
     #endif
 
     #ifdef OSG_GL_MATRICES_AVAILABLE
-        glMatrixMode( GL_MODELVIEW );
-        glLoadIdentity();
+        // A core profile context has no matrix stack.
+        if (!state.getIsCoreProfile())
+        {
+            glMatrixMode( GL_MODELVIEW );
+            glLoadIdentity();
+        }
     #endif
 
     // apply the positional state.

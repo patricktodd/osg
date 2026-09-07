@@ -237,6 +237,9 @@ class OSG_EXPORT State : public Referenced
         const osg::Matrix& getModelViewMatrix() const { return *_modelView; }
 
         void setUseModelViewAndProjectionUniforms(bool flag) { _useModelViewAndProjectionUniforms = flag; }
+
+        /** True on a core profile context (see GLExtensions::isCoreProfile); cached when the extensions are initialized. */
+        bool getIsCoreProfile() const { return _isCoreProfile; }
         bool getUseModelViewAndProjectionUniforms() const { return _useModelViewAndProjectionUniforms; }
 
         void updateModelViewAndProjectionMatrixUniforms();
@@ -1106,6 +1109,7 @@ class OSG_EXPORT State : public Referenced
         ref_ptr<RefMatrix>          _modelViewCache;
 
         bool                        _useModelViewAndProjectionUniforms;
+        bool                        _isCoreProfile;
         ref_ptr<Uniform>            _modelViewMatrixUniform;
         ref_ptr<Uniform>            _projectionMatrixUniform;
         ref_ptr<Uniform>            _modelViewProjectionMatrixUniform;

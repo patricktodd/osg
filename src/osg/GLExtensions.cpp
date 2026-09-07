@@ -455,6 +455,16 @@ GLExtensions::GLExtensions(unsigned int in_contextID):
     }
 
     glVersion = validContext ? findAsciiToFloat( versionString ) : 0.0f;
+
+    // A core profile context has no fixed-function state; the flag lets a GL2 build skip the calls that
+    // no longer exist there. GL_CONTEXT_PROFILE_MASK is only defined from 3.2 on.
+    isCoreProfile = false;
+    if (validContext && glVersion >= 3.2f)
+    {
+        GLint profileMask = 0;
+        glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &profileMask);
+        isCoreProfile = (profileMask & GL_CONTEXT_CORE_PROFILE_BIT) != 0;
+    }
     glslLanguageVersion = 0.0f;
 
     bool shadersBuiltIn = OSG_GLES2_FEATURES || OSG_GLES3_FEATURES || OSG_GL3_FEATURES;
@@ -728,10 +738,12 @@ GLExtensions::GLExtensions(unsigned int in_contextID):
     setGLExtensionFuncPtr(glBindBufferBase,  "glBindBufferBase", "glBindBufferBaseEXT", "glBindBufferBaseNV" , validContext);
     setGLExtensionFuncPtr(glTexBuffer, "glTexBuffer","glTexBufferARB" , validContext);
 
-    isVBOSupported = validContext && (OSG_GLES2_FEATURES || OSG_GLES3_FEATURES || OSG_GL3_FEATURES || osg::isGLExtensionSupported(contextID,"GL_ARB_vertex_buffer_object"));
-    isPBOSupported = validContext && ((OSG_GLES3_FEATURES && glVersion >= 3.0) || OSG_GL3_FEATURES || osg::isGLExtensionSupported(contextID,"GL_ARB_pixel_buffer_object"));
+    // Some core profile drivers (Apple's) do not advertise extensions that were promoted to core, so also accept
+    // the GL version that includes each feature. Only the features a core context needs to render are covered.
+    isVBOSupported = validContext && (OSG_GLES2_FEATURES || OSG_GLES3_FEATURES || OSG_GL3_FEATURES || osg::isGLExtensionOrVersionSupported(contextID,"GL_ARB_vertex_buffer_object", 1.5f));
+    isPBOSupported = validContext && ((OSG_GLES3_FEATURES && glVersion >= 3.0) || OSG_GL3_FEATURES || osg::isGLExtensionOrVersionSupported(contextID,"GL_ARB_pixel_buffer_object", 2.1f));
     isTBOSupported = validContext && osg::isGLExtensionSupported(contextID,"GL_ARB_texture_buffer_object");
-    isVAOSupported = validContext && ((OSG_GLES3_FEATURES && glVersion >= 3.0) || OSG_GL3_FEATURES || osg::isGLExtensionSupported(contextID, "GL_ARB_vertex_array_object", "GL_OES_vertex_array_object"));
+    isVAOSupported = validContext && ((OSG_GLES3_FEATURES && glVersion >= 3.0) || OSG_GL3_FEATURES || osg::isGLExtensionOrVersionSupported(contextID, "GL_ARB_vertex_array_object", 3.0f) || osg::isGLExtensionSupported(contextID, "GL_OES_vertex_array_object"));
     isTransformFeedbackSupported = validContext && osg::isGLExtensionSupported(contextID, "GL_ARB_transform_feedback2");
     isBufferObjectSupported = isVBOSupported || isPBOSupported;
 
@@ -856,7 +868,7 @@ GLExtensions::GLExtensions(unsigned int in_contextID):
                                  isGLExtensionOrVersionSupported(contextID,"GL_EXT_multitexture", 1.3f));
 
     isTextureFilterAnisotropicSupported = validContext && isGLExtensionSupported(contextID,"GL_EXT_texture_filter_anisotropic");
-    isTextureSwizzleSupported = validContext && isGLExtensionSupported(contextID,"GL_ARB_texture_swizzle");
+    isTextureSwizzleSupported = validContext && isGLExtensionOrVersionSupported(contextID,"GL_ARB_texture_swizzle", 3.3f);
     isTextureCompressionARBSupported = validContext && (builtInSupport || isGLExtensionOrVersionSupported(contextID,"GL_ARB_texture_compression", 1.3f));
     isTextureCompressionS3TCSupported = validContext && (isGLExtensionSupported(contextID,"GL_EXT_texture_compression_s3tc") ||
                                                          isGLExtensionSupported(contextID, "GL_S3_s3tc") ||
@@ -1159,7 +1171,7 @@ GLExtensions::GLExtensions(unsigned int in_contextID):
 
     isPackedDepthStencilSupported = validContext &&
                                     (OSG_GL3_FEATURES ||
-                                     (isGLExtensionSupported(contextID, "GL_EXT_packed_depth_stencil")) ||
+                                     (isGLExtensionOrVersionSupported(contextID, "GL_EXT_packed_depth_stencil", 3.0f)) ||
                                      (isGLExtensionSupported(contextID, "GL_OES_packed_depth_stencil")));
 
     //subroutine
@@ -1280,7 +1292,9 @@ GLExtensions::GLExtensions(unsigned int in_contextID):
         {
             glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,&glMaxTextureUnits);
             #ifdef OSG_GL_FIXED_FUNCTION_AVAILABLE
-                glGetIntegerv(GL_MAX_TEXTURE_COORDS, &glMaxTextureCoords);
+                // GL_MAX_TEXTURE_COORDS does not exist on a core profile context.
+                if (isCoreProfile) glMaxTextureCoords = glMaxTextureUnits;
+                else glGetIntegerv(GL_MAX_TEXTURE_COORDS, &glMaxTextureCoords);
             #else
                 glMaxTextureCoords = glMaxTextureUnits;
             #endif
